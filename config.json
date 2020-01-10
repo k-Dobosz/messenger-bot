@@ -1,0 +1,13 @@
+{
+  "lists": {
+    "all": [],
+    "girls": [],
+    "boys": []
+  },
+  "commands": ["!all", "!girls", "!boys", "!help"],
+  "account": {
+    "email": "example@domain.com",
+    "password": "1234"
+  },
+  "url": "https://www.messenger.com/t/"
+}
