@@ -1,17 +1,11 @@
 #!/usr/bin/env python
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from bot import *
 from python_json_config import ConfigBuilder
-import chromedriver_binary
+from selenium.webdriver.common.keys import Keys
 import getopt
 import logging
 import sys
-import time
+
 
 builder = ConfigBuilder()
 config = builder.parse_config('config.json')
@@ -43,80 +37,44 @@ def main():
         else:
             assert False, 'Unhandled option'
 
-    chrome_options = Options()
+    bot = MessengerBot(
+        show_browser=show_browser,
+        url=config.url,
+        email=config.account.email,
+        password=config.account.password
+    )
 
-    if not show_browser:
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--window-size=1920x1080')
+    @bot.command()
+    def command_all():
+        m = Message(bot)
+        for person in config.lists.all:
+            m.mention(person)
+        m.send()
 
-    driver = webdriver.Chrome(options=chrome_options)
-    driver.get(config.url)
-    try:
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="email"]')))
-        email = driver.find_element_by_xpath('//*[@id="email"]')
-        email.send_keys(config.account.email)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="pass"]')))
-        passwd = driver.find_element_by_xpath('//*[@id="pass"]')
-        passwd.send_keys(config.account.password)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="loginbutton"]')))
-        submit = driver.find_element_by_xpath('//*[@id="loginbutton"]')
-        submit.click()
+    @bot.command()
+    def command_girls():
+        m = Message(bot)
+        for person in config.lists.girls:
+            m.mention(person)
+        m.send()
 
-        while True:
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@class="_aok _7i2m"]')))
-            message = driver.find_elements_by_xpath("//div[@class='_aok _7i2m']")[-1].text.lower()
-            if message == '!all':
-                try:
-                    message_box = driver.switch_to.active_element
-                    for person in config.lists.all:
-                        message_box.send_keys('@' + person)
-                        time.sleep(0.035)
-                        message_box.send_keys(Keys.TAB)
-                        message_box.send_keys(Keys.SPACE)
-                finally:
-                    message_box.send_keys(Keys.ENTER)
+    @bot.command()
+    def command_boys():
+        m = Message(bot)
+        for person in config.lists.boys:
+            m.mention(person)
+        m.send()
 
-                logger.info(message)
-            elif message == '!boys':
-                try:
-                    message_box = driver.switch_to.active_element
-                    for person in config.lists.boys:
-                        message_box.send_keys('@' + person)
-                        time.sleep(0.035)
-                        message_box.send_keys(Keys.TAB)
-                        message_box.send_keys(Keys.SPACE)
-                finally:
-                    message_box.send_keys(Keys.ENTER)
+    @bot.command()
+    def command_help():
+        m = Message(bot)
+        m.add('Available commands:')
+        for command in config.commands:
+            m.add(Keys.ALT + Keys.ENTER)
+            m.add(command)
+        m.send()
 
-                logger.info(message)
-            elif message == '!girls':
-                try:
-                    message_box = driver.switch_to.active_element
-                    for person in config.lists.girls:
-                        message_box.send_keys('@' + person)
-                        time.sleep(0.035)
-                        message_box.send_keys(Keys.TAB)
-                        message_box.send_keys(Keys.SPACE)
-                finally:
-                    message_box.send_keys(Keys.ENTER)
+    bot.run()
 
-                logger.info(message.text)
-            elif message == '!help':
-                message_box = driver.switch_to.active_element
-                message_box.send_keys('Available commands:')
-
-                for command in config.commands:
-                    message_box.send_keys(Keys.CONTROL + Keys.ENTER)
-                    message_box.send_keys(command)
-
-                message_box.send_keys(Keys.ENTER)
-            else:
-                logger.info('message')
-
-            time.sleep(1)
-    except NoSuchElementException:
-        logger.error('Element not found')
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
