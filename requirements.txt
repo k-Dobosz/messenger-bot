@@ -8,5 +8,5 @@ pyrsistent==0.15.7
 python-json-config==1.2.3
 selenium==3.141.0
 six==1.13.0
-urllib3==1.26.5
+urllib3==1.26.18
 zipp==0.6.0
